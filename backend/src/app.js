@@ -11,6 +11,7 @@ const errorHandler = require('./middleware/errorHandler');
 
 const applicationsRouter = require('./routes/applications');
 const summaryRouter      = require('./routes/summary');
+const authRouter         = require('./routes/auth');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.get('/health', (req, res) => {
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/applications', applicationsRouter);
 app.use('/api/summary',      summaryRouter);
+app.use('/api/auth', authRouter);
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res) => {

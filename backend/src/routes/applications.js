@@ -15,6 +15,7 @@ const {
   validateStatusUpdate,
   validateStatusFilter,
 } = require('../middleware/validate');
+const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -41,8 +42,12 @@ router.post('/', validateCreateApplication, async (req, res, next) => {
 // Return all applications, ordered latest first.
 // Supports optional ?status=pending|approved|rejected query filter.
 // Supports optional ?search= query for name or mobile search (bonus).
-router.get('/', validateStatusFilter, async (req, res, next) => {
+// Supports pagination via ?page=1&limit=10
+router.get('/', authMiddleware, validateStatusFilter, async (req, res, next) => {
   const { status, search } = req.query;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const offset = (page - 1) * limit;
 
   try {
     // Build query dynamically to support optional filters
@@ -65,15 +70,35 @@ router.get('/', validateStatusFilter, async (req, res, next) => {
       ? `WHERE ${conditions.join(' AND ')}`
       : '';
 
+    // We need the total count for pagination metadata
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM applications ${whereClause}`,
+      params
+    );
+    const totalCount = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Fetch the actual paginated data
+    const dataParams = [...params, limit, offset];
     const result = await pool.query(
       `SELECT id, name, mobile, amount, purpose, language, status, created_at
        FROM applications
        ${whereClause}
-       ORDER BY created_at DESC`,
-      params
+       ORDER BY created_at DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      dataParams
     );
 
-    res.json({ success: true, data: result.rows });
+    res.json({
+      success: true,
+      data: result.rows,
+      meta: {
+        total: totalCount,
+        page,
+        pages: totalPages,
+        limit,
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -81,7 +106,7 @@ router.get('/', validateStatusFilter, async (req, res, next) => {
 
 // ─── PATCH /api/applications/:id/status ──────────────────────────────────────
 // Update status of an application to 'approved' or 'rejected'.
-router.patch('/:id/status', validateStatusUpdate, async (req, res, next) => {
+router.patch('/:id/status', authMiddleware, validateStatusUpdate, async (req, res, next) => {
   const { id }     = req.params;
   const { status } = req.body;
 
