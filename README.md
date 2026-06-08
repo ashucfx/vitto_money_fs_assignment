@@ -1,94 +1,191 @@
-# Vitto Microfinance Loan Portal
+# Vitto Loan Portal (Pro Edition)
 
-A fully responsive, highly secure, full-stack web application designed for microfinance loan applications and agent operations.
+> **Vitto FSE Intern Assessment** — A production-grade, highly secure, full-stack Loan Application Portal built with Node.js + Express, React (Vite), and PostgreSQL.
 
-## 🌟 Key Features
-
-### Applicant Facing
-- **Multi-lingual Support**: Users can specify their preferred language (Hindi, Tamil, Telugu, Marathi, English) for future communications.
-- **Dynamic Application Form**: A beautifully designed, glassmorphism UI for submitting loan applications with real-time field validation.
-- **Public Status Tracker**: Borrowers receive a unique Reference ID upon submission, allowing them to track their application status (Submitted ➔ Under Review ➔ Approved/Rejected) on a dynamic vertical timeline without requiring a login.
-- **Toast Notifications**: Smooth, professional feedback for all user interactions.
-
-### Agent Operations Dashboard
-- **JWT Authentication**: The dashboard is strictly protected behind a secure login portal using an Agent PIN and stateless JSON Web Tokens.
-- **Interactive Analytics**: Features a real-time `Recharts` Pie Chart visualizing the demographic language distribution of applicants.
-- **Pagination & Search**: The data table is fully paginated and supports instant fuzzy searching by applicant name or mobile number.
-- **Full Payload Inspection**: Agents can click to open an elegant modal to view the complete details of any application without navigating away.
-- **CSV Data Export**: One-click generation of `.csv` reports for the currently filtered dataset.
-
-### 🛡️ Production-Grade Security
-- **SQL Injection Prevention**: All Postgres queries use parameterized inputs.
-- **Helmet HTTP Headers**: The backend automatically sets critical security headers to prevent XSS exploits and client-side sniffing.
-- **Global Rate Limiting**: IPs are globally restricted to 100 requests per 15 minutes to prevent DDoS attacks.
-- **Strict Login Throttling**: The `/login` route restricts IPs to 5 attempts per window, neutralizing brute-force dictionary attacks.
-- **Secure Logout**: Safely obliterates JWT sessions on the client side.
+![Vitto](https://img.shields.io/badge/Vitto-EE1E4C?style=flat&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=nodedotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=flat&logo=postgresql&logoColor=white)
+![Security](https://img.shields.io/badge/Security-Helmet_&_Rate_Limiting-success?style=flat&logo=springsecurity&logoColor=white)
+![Auth](https://img.shields.io/badge/Auth-JWT-orange?style=flat&logo=jsonwebtokens&logoColor=white)
 
 ---
 
-## 🛠️ Technology Stack
+## 🌐 Live URLs
 
-- **Frontend**: React (Vite), React Router v6, Recharts, Lucide React, React Hot Toast, Vanilla CSS (Glassmorphism design system).
-- **Backend**: Node.js, Express.js, PostgreSQL (`pg`), JSON Web Tokens (`jsonwebtoken`), Helmet, Express Rate Limit.
+| Service | URL |
+|---------|-----|
+| **Frontend** | _Add Vercel URL after deployment_ |
+| **Backend API** | _Add Render URL after deployment_ |
+| **Health Check** | `<backend-url>/health` |
 
 ---
 
-## 🚀 Setup Instructions
+## 📋 What's Built (Production Features)
+
+### Backend (Node.js + Express + PostgreSQL)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/api/applications` | Submit a new loan application | No |
+| `GET`  | `/api/applications/:id/track`| Fetch public timeline status | No |
+| `POST` | `/api/auth/login` | Authenticate agent & receive JWT | No |
+| `GET`  | `/api/applications` | List paginated applications with filters | **Yes (JWT)** |
+| `PATCH`| `/api/applications/:id/status`| Update status to `approved` or `rejected` | **Yes (JWT)** |
+| `GET`  | `/api/summary` | Dashboard aggregate analytics | **Yes (JWT)** |
+
+- ✅ **Stateless JWT Authentication** — Secure agent dashboard access via Bearer tokens.
+- ✅ **Global Rate Limiting** — 100 reqs/15m globally, restricting scraping and DDoS.
+- ✅ **Strict Login Throttling** — 5 reqs/15m specifically on `/login` to stop PIN brute-forcing.
+- ✅ **Helmet Security** — Automatic injection of critical HTTP headers to prevent XSS and sniffing.
+- ✅ **Parameterised Queries** — 100% immune to SQL injection.
+
+### Frontend (React + Vite + Recharts)
+
+| Page | Route | Description |
+|------|-------|-------------|
+| **Home** | `/` | Landing page with feature highlights |
+| **Apply** | `/apply` | Dynamic form with multi-language support |
+| **Track** | `/track` | Public portal: live animated timeline of applicant status |
+| **Login** | `/login` | Secure Agent PIN authentication portal |
+| **Dashboard** | `/dashboard` | Protected agent dashboard with data grid & analytics |
+
+- ✅ **Applicant Tracker Portal** — Users can track their loan progress via Reference ID without logging in.
+- ✅ **Interactive Analytics** — Real-time demographic distribution visualised via `Recharts`.
+- ✅ **CSV Export** — Agents can export the currently filtered table to `.csv`.
+- ✅ **Details Modal** — Inspect full applicant payload in an elegant Glassmorphism overlay.
+- ✅ **Pagination & Search** — Blazing fast server-side pagination and fuzzy searching.
+- ✅ **Toast Notifications** — Buttery smooth `react-hot-toast` alerts.
+
+---
+
+## 🚀 Local Setup (5 minutes)
 
 ### Prerequisites
-- Node.js (v18+)
-- PostgreSQL installed and running locally (or a hosted URL like Neon/Supabase)
+- Node.js ≥ 18
+- A PostgreSQL database (Neon free tier recommended)
 
-### 1. Database Setup
-1. Create a new PostgreSQL database (e.g., `vitto_db`).
-2. Run the initialization script to build the schema:
-   ```bash
-   psql -U your_postgres_user -d vitto_db -f backend/migrations/001_init.sql
-   ```
+### 1. Clone the repo
 
-### 2. Backend Configuration
-1. Navigate to the `backend/` directory:
-   ```bash
-   cd backend
-   npm install
-   ```
-2. Copy the example environment file and update the variables:
-   ```bash
-   cp .env.example .env
-   ```
-   *Make sure `DATABASE_URL` points to your active Postgres database and set a secure `JWT_SECRET` and `AGENT_PIN`.*
-3. **Seed the Database**: Generate 25 highly realistic mock applications to populate your dashboard:
-   ```bash
-   node seed.js
-   ```
-4. Start the backend server:
-   ```bash
-   npm run dev
-   ```
-   *The server will run on port 3001.*
+```bash
+git clone <your-repo-url>
+cd vitto-loan-portal
+```
 
-### 3. Frontend Configuration
-1. Open a new terminal and navigate to the `frontend/` directory:
-   ```bash
-   cd frontend
-   npm install
-   ```
-2. Copy the example environment file:
-   ```bash
-   cp .env.example .env.local
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-   *The application will open at `http://localhost:5173`.*
+### 2. Set up the database
+
+Create a free database at [neon.tech](https://neon.tech), then run the migration:
+
+```bash
+psql "<your-DATABASE_URL>" -f backend/migrations/001_init.sql
+```
+
+### 3. Configure backend
+
+```bash
+cd backend
+cp .env.example .env
+```
+Edit `.env`:
+```env
+DATABASE_URL=postgres://user:password@host:5432/dbname
+PORT=3001
+CLIENT_ORIGIN=http://localhost:5173
+AGENT_PIN=123456
+JWT_SECRET=super_secret_jwt_key_here
+```
+
+### 4. Start the backend & Seed Data
+
+```bash
+cd backend
+npm install
+npm run dev
+# ✅ API running at http://localhost:3001
+```
+
+**Optional but recommended:** Open a second terminal and seed the database with 25 realistic applications!
+```bash
+node seed.js
+```
+
+### 5. Configure frontend
+
+```bash
+cd frontend
+cp .env.example .env.local
+```
+Edit `.env.local`:
+```env
+VITE_API_URL=http://localhost:3001
+```
+
+### 6. Start the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+# ✅ App running at http://localhost:5173
+```
 
 ---
 
-## 🔐 Default Credentials
-To access the Agent Dashboard and test the protected routes, click "Dashboard" and log in with the PIN defined in your backend `.env` file (Default is `123456`).
+## ☁️ Deployment
+
+### Backend → Render
+
+1. Push this repo to GitHub (public)
+2. Go to [render.com](https://render.com) → **New Web Service**
+3. Connect your GitHub repo, set **Root Directory** to `backend`
+4. Build command: `npm install`
+5. Start command: `node server.js`
+6. Add environment variables: `DATABASE_URL`, `CLIENT_ORIGIN`, `AGENT_PIN`, `JWT_SECRET`.
+
+### Frontend → Vercel
+
+1. Go to [vercel.com](https://vercel.com) → **New Project**
+2. Import this repo, set **Root Directory** to `frontend`
+3. Framework preset: **Vite**
+4. Add environment variable: `VITE_API_URL` (your Render backend URL)
+5. Deploy
 
 ---
 
-## 🎨 Design Philosophy
-The UI abandons standard flat design in favor of a modern, vibrant **Glassmorphism** aesthetic. Using Vitto's signature brand pink (`#EE1E4C`), deep dark mode backgrounds, translucent blur panels, and smooth micro-animations, the portal delivers an incredibly premium, trustworthy feel for both rural applicants and internal operations staff.
+## 🔌 API Reference
+
+### POST `/api/auth/login`
+**Body:** `{ "pin": "123456" }`
+**Response:** `{ "success": true, "data": { "token": "ey..." } }`
+
+### GET `/api/applications/:id/track`
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-here",
+    "name": "Priya Sharma",
+    "status": "pending",
+    "created_at": "2026-06-09T..."
+  }
+}
+```
+
+### GET `/api/applications`
+*(Requires `Authorization: Bearer <token>`)*
+Supports `?status=pending`, `?search=priya`, `?page=1&limit=10`.
+
+---
+
+## 🔮 Future Improvements
+
+- Add robust unit testing (Jest + Supertest for API, React Testing Library for components).
+- Implement Webhooks for SMS/Email notifications on status changes.
+- Migrate from a single PIN to a fully hashed `users` table with Role Based Access Control (RBAC).
+
+---
+
+## 📄 License
+
+MIT — for assessment purposes only. Confidential assessment issued by Vitto.
