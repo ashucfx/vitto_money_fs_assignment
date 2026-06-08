@@ -1,283 +1,94 @@
-# Vitto Loan Portal
+# Vitto Microfinance Loan Portal
 
-> **Vitto FSE Intern Assessment** — A full-stack Loan Application Portal built with Node.js + Express, React (Vite), and PostgreSQL.
+A fully responsive, highly secure, full-stack web application designed for microfinance loan applications and agent operations.
 
-![Vitto](https://img.shields.io/badge/Vitto-EE1E4C?style=flat&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=nodedotjs&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=flat&logo=postgresql&logoColor=white)
+## 🌟 Key Features
 
----
+### Applicant Facing
+- **Multi-lingual Support**: Users can specify their preferred language (Hindi, Tamil, Telugu, Marathi, English) for future communications.
+- **Dynamic Application Form**: A beautifully designed, glassmorphism UI for submitting loan applications with real-time field validation.
+- **Public Status Tracker**: Borrowers receive a unique Reference ID upon submission, allowing them to track their application status (Submitted ➔ Under Review ➔ Approved/Rejected) on a dynamic vertical timeline without requiring a login.
+- **Toast Notifications**: Smooth, professional feedback for all user interactions.
 
-## 🌐 Live URLs
+### Agent Operations Dashboard
+- **JWT Authentication**: The dashboard is strictly protected behind a secure login portal using an Agent PIN and stateless JSON Web Tokens.
+- **Interactive Analytics**: Features a real-time `Recharts` Pie Chart visualizing the demographic language distribution of applicants.
+- **Pagination & Search**: The data table is fully paginated and supports instant fuzzy searching by applicant name or mobile number.
+- **Full Payload Inspection**: Agents can click to open an elegant modal to view the complete details of any application without navigating away.
+- **CSV Data Export**: One-click generation of `.csv` reports for the currently filtered dataset.
 
-| Service | URL |
-|---------|-----|
-| **Frontend** | _Add Vercel URL after deployment_ |
-| **Backend API** | _Add Render URL after deployment_ |
-| **Health Check** | `<backend-url>/health` |
-
----
-
-## 📋 What's Built
-
-### Backend (Node.js + Express + PostgreSQL)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/applications` | Submit a new loan application |
-| `GET` | `/api/applications` | List all applications (supports `?status=` filter + `?search=`) |
-| `PATCH` | `/api/applications/:id/status` | Update status to `approved` or `rejected` |
-| `GET` | `/api/summary` | Dashboard aggregate stats |
-
-- ✅ Server-side input validation — returns `400` with JSON error messages
-- ✅ Parameterised queries — no SQL injection risk
-- ✅ PostgreSQL credentials in environment variables only
-- ✅ CORS configured per environment
-
-### Frontend (React + Vite)
-
-| Page | Route | Description |
-|------|-------|-------------|
-| **Home** | `/` | Landing page with feature highlights |
-| **Apply** | `/apply` | Loan application form with client-side validation |
-| **Dashboard** | `/dashboard` | Applications table with stats bar, filters, and inline status update |
-
-- ✅ Client-side validation before submit
-- ✅ Success confirmation screen with reference number (UUID)
-- ✅ Inline status update (no full page reload)
-- ✅ Stats bar from `/api/summary`
-- ✅ Status filter dropdown
-- ✅ **Bonus:** Search by applicant name or mobile number
-- ✅ **Bonus:** Language badge colour coding (Hindi / Tamil / Telugu / Marathi / English)
-- ✅ **Bonus:** Mobile-responsive layout
-
-### Database (PostgreSQL)
-
-- Single `applications` table with UUID primary keys
-- Migration file at `backend/migrations/001_init.sql`
-- Status and language constrained via `CHECK` constraints
+### 🛡️ Production-Grade Security
+- **SQL Injection Prevention**: All Postgres queries use parameterized inputs.
+- **Helmet HTTP Headers**: The backend automatically sets critical security headers to prevent XSS exploits and client-side sniffing.
+- **Global Rate Limiting**: IPs are globally restricted to 100 requests per 15 minutes to prevent DDoS attacks.
+- **Strict Login Throttling**: The `/login` route restricts IPs to 5 attempts per window, neutralizing brute-force dictionary attacks.
+- **Secure Logout**: Safely obliterates JWT sessions on the client side.
 
 ---
 
-## 🚀 Local Setup (5 minutes)
+## 🛠️ Technology Stack
+
+- **Frontend**: React (Vite), React Router v6, Recharts, Lucide React, React Hot Toast, Vanilla CSS (Glassmorphism design system).
+- **Backend**: Node.js, Express.js, PostgreSQL (`pg`), JSON Web Tokens (`jsonwebtoken`), Helmet, Express Rate Limit.
+
+---
+
+## 🚀 Setup Instructions
 
 ### Prerequisites
-- Node.js ≥ 18
-- A PostgreSQL database (Neon free tier recommended)
+- Node.js (v18+)
+- PostgreSQL installed and running locally (or a hosted URL like Neon/Supabase)
 
-### 1. Clone the repo
+### 1. Database Setup
+1. Create a new PostgreSQL database (e.g., `vitto_db`).
+2. Run the initialization script to build the schema:
+   ```bash
+   psql -U your_postgres_user -d vitto_db -f backend/migrations/001_init.sql
+   ```
 
-```bash
-git clone <your-repo-url>
-cd vitto-loan-portal
-```
+### 2. Backend Configuration
+1. Navigate to the `backend/` directory:
+   ```bash
+   cd backend
+   npm install
+   ```
+2. Copy the example environment file and update the variables:
+   ```bash
+   cp .env.example .env
+   ```
+   *Make sure `DATABASE_URL` points to your active Postgres database and set a secure `JWT_SECRET` and `AGENT_PIN`.*
+3. **Seed the Database**: Generate 25 highly realistic mock applications to populate your dashboard:
+   ```bash
+   node seed.js
+   ```
+4. Start the backend server:
+   ```bash
+   npm run dev
+   ```
+   *The server will run on port 3001.*
 
-### 2. Set up the database
-
-Create a free database at [neon.tech](https://neon.tech), then run the migration:
-
-```bash
-psql "<your-DATABASE_URL>" -f backend/migrations/001_init.sql
-```
-
-### 3. Configure backend
-
-```bash
-cd backend
-cp .env.example .env
-# Edit .env with your actual DATABASE_URL and CLIENT_ORIGIN
-```
-
-```env
-DATABASE_URL=postgres://user:password@host:5432/dbname
-PORT=3001
-CLIENT_ORIGIN=http://localhost:5173
-```
-
-### 4. Start the backend
-
-```bash
-cd backend
-npm install
-npm run dev
-# ✅ API running at http://localhost:3001
-# ✅ Health check: http://localhost:3001/health
-```
-
-### 5. Configure frontend
-
-```bash
-cd frontend
-cp .env.example .env.local
-# Edit .env.local
-```
-
-```env
-VITE_API_URL=http://localhost:3001
-```
-
-### 6. Start the frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-# ✅ App running at http://localhost:5173
-```
+### 3. Frontend Configuration
+1. Open a new terminal and navigate to the `frontend/` directory:
+   ```bash
+   cd frontend
+   npm install
+   ```
+2. Copy the example environment file:
+   ```bash
+   cp .env.example .env.local
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   *The application will open at `http://localhost:5173`.*
 
 ---
 
-## ☁️ Deployment
-
-### Backend → Render
-
-1. Push this repo to GitHub (public)
-2. Go to [render.com](https://render.com) → **New Web Service**
-3. Connect your GitHub repo, set **Root Directory** to `backend`
-4. Build command: `npm install`
-5. Start command: `node server.js`
-6. Add environment variables in the Render dashboard:
-   - `DATABASE_URL` — your Neon/Supabase connection string
-   - `CLIENT_ORIGIN` — your Vercel frontend URL
-   - `NODE_ENV` — `production`
-
-Alternatively, use the `render.yaml` blueprint in the repo root.
-
-### Frontend → Vercel
-
-1. Go to [vercel.com](https://vercel.com) → **New Project**
-2. Import this repo, set **Root Directory** to `frontend`
-3. Framework preset: **Vite**
-4. Add environment variable:
-   - `VITE_API_URL` — your Render backend URL
-5. Deploy
-
-### Database → Neon (free tier)
-
-1. Go to [neon.tech](https://neon.tech) → Create a project
-2. Copy the connection string
-3. Run the migration: `psql "<connection-string>" -f backend/migrations/001_init.sql`
-4. Use the connection string as `DATABASE_URL`
+## 🔐 Default Credentials
+To access the Agent Dashboard and test the protected routes, click "Dashboard" and log in with the PIN defined in your backend `.env` file (Default is `123456`).
 
 ---
 
-## 🏗️ Project Structure
-
-```
-vitto-loan-portal/
-├── backend/
-│   ├── migrations/
-│   │   └── 001_init.sql          # DB migration (run once)
-│   ├── src/
-│   │   ├── db/
-│   │   │   └── pool.js           # PostgreSQL connection pool
-│   │   ├── middleware/
-│   │   │   ├── validate.js       # Input validation middleware
-│   │   │   └── errorHandler.js   # Global error handler
-│   │   ├── routes/
-│   │   │   ├── applications.js   # POST/GET/PATCH endpoints
-│   │   │   └── summary.js        # GET /api/summary
-│   │   └── app.js                # Express app setup
-│   ├── .env.example
-│   ├── package.json
-│   └── server.js                 # Entry point
-│
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   │   └── client.js         # Axios client + API functions
-│   │   ├── components/
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── StatusBadge.jsx
-│   │   │   └── LanguageBadge.jsx
-│   │   ├── pages/
-│   │   │   ├── Home.jsx          # Landing page
-│   │   │   ├── Apply.jsx         # Loan application form
-│   │   │   └── Dashboard.jsx     # Applications table + stats
-│   │   ├── App.jsx               # Router setup
-│   │   ├── main.jsx              # React entry point
-│   │   └── index.css             # Global styles (design system)
-│   ├── .env.example
-│   ├── vercel.json
-│   └── package.json
-│
-├── render.yaml                   # Render deployment blueprint
-├── .gitignore
-└── README.md
-```
-
----
-
-## 🔌 API Reference
-
-### POST `/api/applications`
-
-**Body:**
-```json
-{
-  "name": "Priya Sharma",
-  "mobile": "9876543210",
-  "amount": 50000,
-  "purpose": "Agricultural equipment",
-  "language": "Hindi"
-}
-```
-
-**Response `201`:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid-here",
-    "name": "Priya Sharma",
-    "status": "pending",
-    "created_at": "2026-06-09T..."
-  }
-}
-```
-
-### GET `/api/applications?status=pending&search=priya`
-
-Returns array of applications, filtered and ordered latest first.
-
-### PATCH `/api/applications/:id/status`
-
-**Body:** `{ "status": "approved" }` or `{ "status": "rejected" }`
-
-### GET `/api/summary`
-
-```json
-{
-  "success": true,
-  "data": {
-    "totalApplications": 42,
-    "totalAmount": 2150000,
-    "byStatus": { "pending": 20, "approved": 15, "rejected": 7 }
-  }
-}
-```
-
----
-
-## ⚠️ Known Issues / Trade-offs
-
-- The Vite version (8.x) requires Node ≥ 20.19.0. The app still works on Node 20.13.1 with engine warnings — all functionality is unaffected.
-- Status can only be moved from `pending → approved` or `pending → rejected` (by design — no reverting).
-- No authentication layer — this is an internal ops tool prototype.
-
----
-
-## 🔮 What I'd Improve
-
-- Add JWT authentication for the agent dashboard
-- Add pagination for the applications table
-- Add unit tests (Jest + Supertest for API, React Testing Library for components)
-- Add webhook notifications when a status changes
-- Support bulk status updates
-
----
-
-## 📄 License
-
-MIT — for assessment purposes only. Confidential assessment issued by Vitto.
+## 🎨 Design Philosophy
+The UI abandons standard flat design in favor of a modern, vibrant **Glassmorphism** aesthetic. Using Vitto's signature brand pink (`#EE1E4C`), deep dark mode backgrounds, translucent blur panels, and smooth micro-animations, the portal delivers an incredibly premium, trustworthy feel for both rural applicants and internal operations staff.
