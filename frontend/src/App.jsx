@@ -8,6 +8,7 @@ import Home      from './pages/Home';
 import Apply     from './pages/Apply';
 import Dashboard from './pages/Dashboard';
 import Login     from './pages/Login';
+import Track     from './pages/Track';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
 
@@ -20,6 +21,7 @@ export default function App() {
         <Routes>
           <Route path="/"          element={<Home />} />
           <Route path="/apply"     element={<Apply />} />
+          <Route path="/track"     element={<Track />} />
           <Route path="/login"     element={<Login />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>

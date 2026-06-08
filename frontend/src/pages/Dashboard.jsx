@@ -148,7 +148,7 @@ export default function Dashboard() {
           <h1 className="dashboard-title">Operations Dashboard</h1>
           <p className="dashboard-subtitle">Manage, analyze, and review applications</p>
         </div>
-        <button onClick={exportCSV} className="btn btn-outline flex-center gap-2">
+        <button onClick={exportCSV} className="btn btn--outline flex-center gap-2">
           <Download size={18} /> Export CSV
         </button>
       </div>

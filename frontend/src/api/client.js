@@ -44,4 +44,8 @@ export const updateStatus = (id, status) =>
 export const fetchSummary = () =>
   apiClient.get('/api/summary');
 
+/** Track application status by ID (Public) */
+export const trackApplication = (id) =>
+  apiClient.get(`/api/applications/${id}/track`);
+
 export default apiClient;

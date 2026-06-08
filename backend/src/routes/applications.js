@@ -132,4 +132,29 @@ router.patch('/:id/status', authMiddleware, validateStatusUpdate, async (req, re
   }
 });
 
+// ─── GET /api/applications/:id/track ─────────────────────────────────────────
+// Public route to track application status by ID
+router.get('/:id/track', async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT id, name, status, created_at
+       FROM applications
+       WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Application not found with that Reference ID.',
+      });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

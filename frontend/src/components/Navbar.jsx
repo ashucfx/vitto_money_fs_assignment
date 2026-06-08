@@ -16,6 +16,16 @@ export default function Navbar() {
         <ul className="navbar__links" role="list">
           <li>
             <NavLink
+              to="/track"
+              className={({ isActive }) =>
+                `navbar__link ${isActive ? 'navbar__link--active' : ''}`
+              }
+            >
+              Track Status
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to="/apply"
               className={({ isActive }) =>
                 `navbar__link ${isActive ? 'navbar__link--active' : ''}`

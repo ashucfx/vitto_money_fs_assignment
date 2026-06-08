@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { createApplication } from '../api/client';
 import toast from 'react-hot-toast';
 import { CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const LANGUAGES = ['Hindi', 'Tamil', 'Telugu', 'Marathi', 'English'];
 
@@ -128,12 +129,16 @@ export default function Apply() {
             </div>
           </div>
           <button
-            className="btn btn--primary"
+            className="btn btn--primary btn--full"
             onClick={() => setSubmitted(null)}
             id="apply-again-btn"
           >
             Submit Another Application
           </button>
+          
+          <Link to="/track" className="btn btn--outline btn--full" style={{ marginTop: '1rem' }}>
+            Track Application Status
+          </Link>
         </div>
       </main>
     );

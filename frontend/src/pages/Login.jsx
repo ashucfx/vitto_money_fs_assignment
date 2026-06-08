@@ -38,7 +38,7 @@ export default function Login() {
         <p className="login-subtitle">Enter your secure PIN to access operations</p>
         
         <form onSubmit={handleSubmit} className="form-group">
-          <label>Agent PIN</label>
+          <label className="form-label">Agent PIN</label>
           <input
             type="password"
             value={pin}
@@ -46,10 +46,10 @@ export default function Login() {
             placeholder="Enter 6-digit PIN"
             maxLength={6}
             autoFocus
-            className="input-field"
+            className="form-input"
             style={{ letterSpacing: '0.5em', textAlign: 'center' }}
           />
-          <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '1rem', width: '100%' }}>
+          <button type="submit" disabled={loading} className="btn btn--primary" style={{ marginTop: '1rem', width: '100%' }}>
             {loading ? 'Authenticating...' : 'Secure Login'}
           </button>
         </form>

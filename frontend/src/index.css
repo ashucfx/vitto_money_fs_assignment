@@ -996,3 +996,58 @@ input, select, textarea { font-family: inherit; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Timeline Tracker ────────────────────────────────────────── */
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+  margin-top: 1rem;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.9rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  opacity: 0.5;
+  transition: all var(--transition);
+}
+.timeline-item.active, .timeline-item.current {
+  opacity: 1;
+}
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+.timeline-icon {
+  position: absolute;
+  left: -2.7rem;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  z-index: 2;
+  color: var(--text-secondary);
+}
+.timeline-item.active .timeline-icon, .timeline-item.current .timeline-icon {
+  color: #fff;
+  border-color: transparent;
+}
+.bg-brand { background: var(--brand) !important; }
+.bg-pending { background: #f59e0b !important; }
+.bg-approved { background: #10b981 !important; }
+.bg-rejected { background: #ef4444 !important; }
+
+.timeline-content h4 {
+  font-size: 1.05rem;
+  margin-bottom: 0.2rem;
+}
