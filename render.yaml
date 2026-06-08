@@ -1,0 +1,22 @@
+# render.yaml — Render deployment config for the backend
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: vitto-loan-api
+    env: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false   # Set this secret in the Render dashboard
+      - key: CLIENT_ORIGIN
+        sync: false   # Set to your deployed frontend URL
+      - key: PORT
+        value: 10000  # Render assigns this automatically
+    healthCheckPath: /health
