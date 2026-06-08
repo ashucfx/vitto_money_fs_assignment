@@ -7,6 +7,8 @@
 
 import { useState } from 'react';
 import { createApplication } from '../api/client';
+import toast from 'react-hot-toast';
+import { CheckCircle } from 'lucide-react';
 
 const LANGUAGES = ['Hindi', 'Tamil', 'Telugu', 'Marathi', 'English'];
 
@@ -76,9 +78,14 @@ export default function Apply() {
       });
       setSubmitted(response.data.data);
       setForm(INITIAL_FORM);
+      toast.success('Application submitted successfully!');
     } catch (err) {
-      const serverErrors = err.response?.data?.errors || ['Something went wrong. Please try again.'];
-      setErrors({ server: serverErrors.join(' ') });
+      if (err.response?.data?.errors) {
+        // Backend validation errors
+        err.response.data.errors.forEach((e) => toast.error(e.msg || e));
+      } else {
+        toast.error(err.response?.data?.error || 'Something went wrong. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -89,8 +96,10 @@ export default function Apply() {
     return (
       <main className="page-container" id="apply-success">
         <div className="success-card">
-          <div className="success-icon" aria-hidden="true">✓</div>
-          <h1 className="success-title">Application Submitted!</h1>
+          <div className="success-icon" aria-hidden="true">
+            <CheckCircle size={48} />
+          </div>
+          <h2 className="success-title">Application Submitted!</h2>
           <p className="success-subtitle">
             Your loan application has been received and is under review.
           </p>

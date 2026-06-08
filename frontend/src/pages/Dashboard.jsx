@@ -1,64 +1,38 @@
-/**
- * Dashboard Page — applications table with stats bar, filters, and inline status update.
- *
- * Features:
- * - Stats bar (total apps, total amount, per-status counts) from GET /api/summary
- * - All applications table from GET /api/applications
- * - Status filter dropdown (pending / approved / rejected / all)
- * - Search by applicant name or mobile number (bonus)
- * - Inline status update (approved / rejected) via PATCH — no full page reload
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApplications, fetchSummary, updateStatus } from '../api/client';
 import StatusBadge from '../components/StatusBadge';
 import LanguageBadge from '../components/LanguageBadge';
+import DetailsModal from '../components/DetailsModal';
+import toast from 'react-hot-toast';
+import { Download, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 function StatsBar({ summary, loading }) {
-  if (loading) {
-    return (
-      <div className="stats-bar" aria-label="Dashboard statistics">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="stat-card stat-card--skeleton" aria-hidden="true" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!summary) return null;
-
+  if (loading || !summary) return <div className="stats-bar-skeleton">Loading stats...</div>;
   const fmt = (n) => Number(n).toLocaleString('en-IN');
 
   return (
-    <div className="stats-bar" role="region" aria-label="Dashboard statistics">
+    <div className="stats-bar">
       <div className="stat-card">
-        <span className="stat-card__value" id="stat-total-apps">
-          {fmt(summary.totalApplications)}
-        </span>
+        <span className="stat-card__value">{fmt(summary.totalApplications)}</span>
         <span className="stat-card__label">Total Applications</span>
       </div>
       <div className="stat-card">
-        <span className="stat-card__value" id="stat-total-amount">
-          ₹{fmt(summary.totalAmount)}
-        </span>
-        <span className="stat-card__label">Total Amount Requested</span>
+        <span className="stat-card__value">₹{fmt(summary.totalAmount)}</span>
+        <span className="stat-card__label">Total Requested</span>
       </div>
       <div className="stat-card stat-card--pending">
-        <span className="stat-card__value" id="stat-pending">
-          {fmt(summary.byStatus.pending)}
-        </span>
+        <span className="stat-card__value">{fmt(summary.byStatus.pending)}</span>
         <span className="stat-card__label">Pending</span>
       </div>
       <div className="stat-card stat-card--approved">
-        <span className="stat-card__value" id="stat-approved">
-          {fmt(summary.byStatus.approved)}
-        </span>
+        <span className="stat-card__value">{fmt(summary.byStatus.approved)}</span>
         <span className="stat-card__label">Approved</span>
       </div>
       <div className="stat-card stat-card--rejected">
-        <span className="stat-card__value" id="stat-rejected">
-          {fmt(summary.byStatus.rejected)}
-        </span>
+        <span className="stat-card__value">{fmt(summary.byStatus.rejected)}</span>
         <span className="stat-card__label">Rejected</span>
       </div>
     </div>
@@ -79,9 +53,10 @@ function StatusDropdown({ applicationId, currentStatus, onStatusChange }) {
     setUpdating(true);
     try {
       await updateStatus(applicationId, newStatus);
+      toast.success(`Application marked as ${newStatus}`);
       onStatusChange(applicationId, newStatus);
     } catch {
-      alert('Failed to update status. Please try again.');
+      toast.error('Failed to update status.');
     } finally {
       setUpdating(false);
     }
@@ -93,12 +68,9 @@ function StatusDropdown({ applicationId, currentStatus, onStatusChange }) {
       defaultValue=""
       onChange={handleChange}
       disabled={updating}
-      aria-label="Update application status"
-      id={`status-select-${applicationId}`}
+      onClick={(e) => e.stopPropagation()}
     >
-      <option value="" disabled>
-        {updating ? 'Updating…' : 'Pending ▾'}
-      </option>
+      <option value="" disabled>{updating ? '...' : 'Pending ▾'}</option>
       <option value="approved">Approve</option>
       <option value="rejected">Reject</option>
     </select>
@@ -107,105 +79,115 @@ function StatusDropdown({ applicationId, currentStatus, onStatusChange }) {
 
 export default function Dashboard() {
   const [applications, setApplications] = useState([]);
-  const [summary, setSummary]           = useState(null);
-  const [loading, setLoading]           = useState(true);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [error, setError]               = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Filters & Pagination
   const [statusFilter, setStatusFilter] = useState('');
-  const [searchQuery, setSearchQuery]   = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Modals
+  const [selectedApp, setSelectedApp] = useState(null);
 
-  // Debounce search input by 300ms
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1); // Reset page on search
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch summary stats
-  const loadSummary = useCallback(async () => {
-    setSummaryLoading(true);
-    try {
-      const res = await fetchSummary();
-      setSummary(res.data.data);
-    } catch {
-      // Non-critical — page still works without stats
-      console.error('Failed to load summary');
-    } finally {
-      setSummaryLoading(false);
-    }
-  }, []);
-
-  // Fetch applications with current filters
-  const loadApplications = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const params = {};
-      if (statusFilter)     params.status = statusFilter;
-      if (debouncedSearch)  params.search = debouncedSearch;
-
-      const res = await fetchApplications(params);
-      setApplications(res.data.data);
-    } catch {
-      setError('Failed to load applications. Please refresh.');
+      const [appRes, sumRes] = await Promise.all([
+        fetchApplications({ status: statusFilter, search: debouncedSearch, page, limit: 10 }),
+        fetchSummary()
+      ]);
+      setApplications(appRes.data.data);
+      setTotalPages(appRes.data.meta.pages);
+      setSummary(sumRes.data.data);
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        toast.error('Failed to load dashboard data.');
+      }
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, debouncedSearch]);
+  }, [statusFilter, debouncedSearch, page]);
 
-  useEffect(() => { loadSummary(); }, [loadSummary]);
-  useEffect(() => { loadApplications(); }, [loadApplications]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  // Inline status update — mutate local state without full reload
   function handleStatusChange(id, newStatus) {
-    setApplications((prev) =>
-      prev.map((app) => app.id === id ? { ...app, status: newStatus } : app)
-    );
-    // Refresh summary stats to reflect new counts
-    loadSummary();
+    setApplications(prev => prev.map(app => app.id === id ? { ...app, status: newStatus } : app));
+    loadData(); // Refresh summary stats
   }
 
-  const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric',
-    });
-
-  const formatAmount = (n) =>
-    `₹${Number(n).toLocaleString('en-IN')}`;
+  const exportCSV = () => {
+    if (!applications.length) return toast.error('No data to export');
+    const headers = ['ID,Name,Mobile,Amount,Purpose,Language,Status,Date\n'];
+    const rows = applications.map(app => 
+      `${app.id},"${app.name}",${app.mobile},${app.amount},"${app.purpose}",${app.language},${app.status},${app.created_at}\n`
+    );
+    const blob = new Blob([headers, ...rows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vitto_applications_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    toast.success('Export downloaded!');
+  };
 
   return (
     <main className="page-container" id="dashboard-page">
-      <div className="dashboard-header">
-        <h1 className="dashboard-title">Applications Dashboard</h1>
-        <p className="dashboard-subtitle">
-          Manage and review all loan applications
-        </p>
+      <div className="dashboard-header-flex">
+        <div>
+          <h1 className="dashboard-title">Operations Dashboard</h1>
+          <p className="dashboard-subtitle">Manage, analyze, and review applications</p>
+        </div>
+        <button onClick={exportCSV} className="btn btn-outline flex-center gap-2">
+          <Download size={18} /> Export CSV
+        </button>
       </div>
 
-      {/* Stats Bar */}
-      <StatsBar summary={summary} loading={summaryLoading} />
+      <StatsBar summary={summary} loading={loading && !summary} />
+
+      {/* Analytics Section */}
+      {summary?.byLanguage && summary.byLanguage.length > 0 && (
+        <div className="analytics-section glass-panel">
+          <h3>Preferred Languages</h3>
+          <div className="chart-container" style={{ height: 250 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={summary.byLanguage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                  {summary.byLanguage.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
-      <div className="filters-bar" role="search" aria-label="Filter applications">
-        <div className="search-wrapper">
-          <span className="search-icon" aria-hidden="true">🔍</span>
-          <input
-            id="search-input"
-            type="search"
-            className="search-input"
-            placeholder="Search by name or mobile…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search applications by name or mobile number"
-          />
-        </div>
-
+      <div className="filters-bar mt-4">
+        <input
+          type="search"
+          className="search-input"
+          placeholder="Search by name or mobile…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
         <select
-          id="status-filter"
           className="filter-select"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          aria-label="Filter by status"
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
         >
           <option value="">All Statuses</option>
           <option value="pending">Pending</option>
@@ -214,95 +196,75 @@ export default function Dashboard() {
         </select>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="alert alert--error" role="alert">
-          {error}
-          <button className="btn btn--ghost btn--sm" onClick={loadApplications}>
-            Retry
-          </button>
-        </div>
-      )}
-
       {/* Table */}
       <div className="table-wrapper">
-        {loading ? (
-          <div className="table-skeleton" aria-label="Loading applications" aria-live="polite">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="table-skeleton__row" aria-hidden="true" />
-            ))}
-          </div>
+        {loading && applications.length === 0 ? (
+          <div className="table-skeleton">Loading...</div>
         ) : applications.length === 0 ? (
-          <div className="empty-state" role="status">
-            <span className="empty-state__icon" aria-hidden="true">📋</span>
-            <p className="empty-state__text">No applications found.</p>
-            {(statusFilter || searchQuery) && (
-              <button
-                className="btn btn--ghost"
-                onClick={() => { setStatusFilter(''); setSearchQuery(''); }}
-                id="clear-filters-btn"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
+          <div className="empty-state">No applications found.</div>
         ) : (
-          <div className="table-scroll">
-            <table className="applications-table" aria-label="Loan applications">
-              <thead>
-                <tr>
-                  <th scope="col">Applicant</th>
-                  <th scope="col">Mobile</th>
-                  <th scope="col">Amount</th>
-                  <th scope="col">Purpose</th>
-                  <th scope="col">Language</th>
-                  <th scope="col">Date</th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applications.map((app) => (
-                  <tr key={app.id} className="table-row" id={`row-${app.id}`}>
-                    <td className="table-cell table-cell--name">
-                      <span className="applicant-name">{app.name}</span>
-                    </td>
-                    <td className="table-cell">{app.mobile}</td>
-                    <td className="table-cell table-cell--amount">
-                      {formatAmount(app.amount)}
-                    </td>
-                    <td className="table-cell table-cell--purpose">
-                      <span className="purpose-text" title={app.purpose}>
-                        {app.purpose}
-                      </span>
-                    </td>
-                    <td className="table-cell">
-                      <LanguageBadge language={app.language} />
-                    </td>
-                    <td className="table-cell table-cell--date">
-                      {formatDate(app.created_at)}
-                    </td>
-                    <td className="table-cell">
-                      <StatusDropdown
-                        applicationId={app.id}
-                        currentStatus={app.status}
-                        onStatusChange={handleStatusChange}
-                      />
-                    </td>
+          <>
+            <div className="table-scroll">
+              <table className="applications-table">
+                <thead>
+                  <tr>
+                    <th>Applicant</th>
+                    <th>Amount</th>
+                    <th>Language</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {applications.map((app) => (
+                    <tr key={app.id} className="table-row pointer" onClick={() => setSelectedApp(app)}>
+                      <td>
+                        <span className="applicant-name">{app.name}</span>
+                        <div className="text-sm text-gray">{app.mobile}</div>
+                      </td>
+                      <td className="highlight-amount">₹{Number(app.amount).toLocaleString('en-IN')}</td>
+                      <td><LanguageBadge language={app.language} /></td>
+                      <td>{new Date(app.created_at).toLocaleDateString('en-IN')}</td>
+                      <td>
+                        <StatusDropdown applicationId={app.id} currentStatus={app.status} onStatusChange={handleStatusChange} />
+                      </td>
+                      <td>
+                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setSelectedApp(app); }}>
+                          <Eye size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="pagination-bar">
+                <button 
+                  className="btn-icon" 
+                  disabled={page === 1} 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft /> Prev
+                </button>
+                <span className="page-indicator">Page {page} of {totalPages}</span>
+                <button 
+                  className="btn-icon" 
+                  disabled={page === totalPages} 
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                >
+                  Next <ChevronRight />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {!loading && applications.length > 0 && (
-        <p className="table-count" role="status" aria-live="polite">
-          Showing {applications.length} application{applications.length !== 1 ? 's' : ''}
-          {statusFilter && ` · ${statusFilter}`}
-          {debouncedSearch && ` · "${debouncedSearch}"`}
-        </p>
-      )}
+      {selectedApp && <DetailsModal application={selectedApp} onClose={() => setSelectedApp(null)} />}
     </main>
   );
 }

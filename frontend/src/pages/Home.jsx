@@ -3,6 +3,7 @@
  */
 
 import { Link } from 'react-router-dom';
+import { ClipboardList, CheckCircle2, Globe2 } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -31,21 +32,21 @@ export default function Home() {
 
         <div className="hero__visual" aria-hidden="true">
           <div className="hero__card hero__card--1">
-            <div className="hero__card-icon">📋</div>
+            <div className="hero__card-icon"><ClipboardList size={32} /></div>
             <div>
               <div className="hero__card-label">Applications</div>
               <div className="hero__card-value">Tracked in real-time</div>
             </div>
           </div>
           <div className="hero__card hero__card--2">
-            <div className="hero__card-icon">✅</div>
+            <div className="hero__card-icon"><CheckCircle2 size={32} /></div>
             <div>
               <div className="hero__card-label">Status Updates</div>
               <div className="hero__card-value">Instant approvals</div>
             </div>
           </div>
           <div className="hero__card hero__card--3">
-            <div className="hero__card-icon">🌐</div>
+            <div className="hero__card-icon"><Globe2 size={32} /></div>
             <div>
               <div className="hero__card-label">Languages</div>
               <div className="hero__card-value">Hindi · Tamil · Telugu · More</div>

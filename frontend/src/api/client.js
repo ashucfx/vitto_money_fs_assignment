@@ -15,6 +15,17 @@ const apiClient = axios.create({
   },
 });
 
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('agent_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ─── Authentication API ────────────────────────────────────────────────────────
+export const login = (pin) => apiClient.post('/api/auth/login', { pin });
+
 // ─── Applications API ─────────────────────────────────────────────────────────
 
 /** Submit a new loan application. */
