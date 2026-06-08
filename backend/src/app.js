@@ -18,7 +18,7 @@ const authRouter         = require('./routes/auth');
 const app = express();
 
 // ─── Security Headers (Helmet) ────────────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // ─── Global Rate Limiting ─────────────────────────────────────────────────────
 // Limit each IP to 100 requests per 15 minutes
