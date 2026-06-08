@@ -2,9 +2,20 @@
  * Navbar — top navigation with Vitto branding and page links.
  */
 
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation(); // Re-evaluates token when route changes
+  const token = localStorage.getItem('agent_token');
+
+  const handleLogout = () => {
+    localStorage.removeItem('agent_token');
+    toast.success('Logged out successfully');
+    navigate('/login');
+  };
   return (
     <nav className="navbar" role="navigation" aria-label="Main navigation">
       <div className="navbar__inner">
@@ -44,6 +55,13 @@ export default function Navbar() {
               Dashboard
             </NavLink>
           </li>
+          {token && (
+            <li>
+              <button onClick={handleLogout} className="navbar__link flex-center gap-2" style={{ color: 'var(--status-rejected)' }}>
+                <LogOut size={16} /> Logout
+              </button>
+            </li>
+          )}
         </ul>
       </div>
     </nav>

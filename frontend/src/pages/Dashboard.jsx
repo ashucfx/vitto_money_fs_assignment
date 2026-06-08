@@ -4,10 +4,11 @@ import StatusBadge from '../components/StatusBadge';
 import LanguageBadge from '../components/LanguageBadge';
 import DetailsModal from '../components/DetailsModal';
 import toast from 'react-hot-toast';
-import { Download, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight, Eye, Search } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+// Matching index.css language colors
+const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f97316', '#14b8a6'];
 
 function StatsBar({ summary, loading }) {
   if (loading || !summary) return <div className="stats-bar-skeleton">Loading stats...</div>;
@@ -177,13 +178,16 @@ export default function Dashboard() {
 
       {/* Filters */}
       <div className="filters-bar mt-4">
-        <input
-          type="search"
-          className="search-input"
-          placeholder="Search by name or mobile…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className="search-wrapper">
+          <Search className="search-icon" size={16} />
+          <input
+            type="search"
+            className="search-input"
+            placeholder="Search by name or mobile…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
         <select
           className="filter-select"
           value={statusFilter}
@@ -219,17 +223,17 @@ export default function Dashboard() {
                 <tbody>
                   {applications.map((app) => (
                     <tr key={app.id} className="table-row pointer" onClick={() => setSelectedApp(app)}>
-                      <td>
+                      <td className="table-cell table-cell--name">
                         <span className="applicant-name">{app.name}</span>
                         <div className="text-sm text-gray">{app.mobile}</div>
                       </td>
-                      <td className="highlight-amount">₹{Number(app.amount).toLocaleString('en-IN')}</td>
-                      <td><LanguageBadge language={app.language} /></td>
-                      <td>{new Date(app.created_at).toLocaleDateString('en-IN')}</td>
-                      <td>
+                      <td className="table-cell table-cell--amount">₹{Number(app.amount).toLocaleString('en-IN')}</td>
+                      <td className="table-cell"><LanguageBadge language={app.language} /></td>
+                      <td className="table-cell table-cell--date">{new Date(app.created_at).toLocaleDateString('en-IN')}</td>
+                      <td className="table-cell">
                         <StatusDropdown applicationId={app.id} currentStatus={app.status} onStatusChange={handleStatusChange} />
                       </td>
-                      <td>
+                      <td className="table-cell">
                         <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setSelectedApp(app); }}>
                           <Eye size={18} />
                         </button>
